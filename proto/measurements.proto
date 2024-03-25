@@ -1,0 +1,14 @@
+syntax = "proto3";
+package pb;
+
+option go_package = "github.com/PaoloEG/terrasense";
+
+message Measurements {
+  int32 chipID = 1;
+  float soilMoisture = 2;
+  float temperature = 3;
+  float humidity = 4;
+  float pressure = 5;
+  float altitude = 6;
+}
+

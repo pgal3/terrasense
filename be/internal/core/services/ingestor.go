@@ -1,26 +1,25 @@
 package services
 
 import (
-	"fmt"
+	"log"
 
-	"github.com/PaoloEG/terrasense/internal/core/domain/entities"
 	"github.com/PaoloEG/terrasense/internal/core/ports"
 )
 
 type IngestorService struct {
-	Telemetry ports.TelemetryPort
-	Repo      ports.RepoPort
+	Telemetry ports.TelemetryUtilsPort
+	Repo      ports.TelemetryRepoPort
 }
 
-func (s *IngestorService) HandleTelemetry(data []byte) entities.Telemetry {
-	telemetry, extractError := s.Telemetry.ExtractData(data)
-	if extractError != nil {
-		fmt.Println("error extracting telemetry")
-		return entities.Telemetry{}
+func (s *IngestorService) CreateTelemetryHandler() func([]byte){
+	return func(data []byte){
+		telemetry, extractError := s.Telemetry.ExtractData(data)
+		if extractError != nil {
+			log.Printf("error extracting telemetry: %s", extractError.Error())
+		}
+		repoError := s.Repo.Save(telemetry.Id, telemetry)
+		if repoError != nil {
+			log.Printf("error saving telemetry: %s", repoError.Error())
+		}
 	}
-	repoError := s.Repo.Save(telemetry.Id, telemetry)
-	if repoError != nil {
-		fmt.Println("error saving telemetry")
-	}
-	return telemetry
 }

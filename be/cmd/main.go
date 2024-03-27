@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -9,30 +10,31 @@ import (
 	"github.com/PaoloEG/terrasense/internal/core/services"
 	"github.com/PaoloEG/terrasense/internal/infrastructure/adapters/influxdb"
 	protobuf_adapter "github.com/PaoloEG/terrasense/internal/infrastructure/adapters/protobuf"
-	mqtt_lib "github.com/PaoloEG/terrasense/lib/mqtt"
+	mqtt_handler "github.com/PaoloEG/terrasense/internal/infrastructure/handlers/mqtt"
 	"github.com/joho/godotenv"
 )
 
+const MQTT_TOPIC = "terrasense/+/measurements"
+
 func main() {
-	keepAlive := make(chan os.Signal)
-	signal.Notify(keepAlive, os.Interrupt, syscall.SIGTERM)
-	godotenv.Load("../.env")
+	isProd := flag.Bool("prod", false, "Set environment as PROD")
 	fmt.Println("Program Starting...")
-	config := &mqtt_lib.MqttOptions{
-		Host:     os.Getenv("MQTT_HOST"),
-		Port:     os.Getenv("MQTT_PORT"),
-		ClientId: os.Getenv("MQTT_CLIENTID"),
-		Username: os.Getenv("MQTT_USERNAME"),
-		Password: os.Getenv("MQTT_PWD"),
+	flag.Parse()
+	if(!*isProd){
+		fmt.Println("Loading .env")
+		currentPath, _ := os.Getwd()
+		godotenv.Load(currentPath+"/.env")
 	}
-	mqtt := mqtt_lib.New(*config)
-	ingestor := &services.IngestorService{
+	ingestorService := &services.IngestorService{
 		Telemetry: protobuf_adapter.New(),
-		Repo:      influxdb.New(),
+		Repo:      influxdb.New(influxdb.WithEnvConfig()),
 	}
-	funz := func(input []byte) {
-		ingestor.HandleTelemetry(input)
-	}
-	mqtt.Sub("/terrasense/+/measurements", funz)
-	<-keepAlive
+	mqtt := mqtt_handler.New(mqtt_handler.WithEnvConfig())
+	mqtt.Start(MQTT_TOPIC, ingestorService.CreateTelemetryHandler())
+
+	// Wait for a signal to exit the program gracefully
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+	mqtt.Disconnect()
 }

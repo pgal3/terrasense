@@ -9,7 +9,6 @@ import (
 type Telemetry struct {
 	Id           string
 	ChipID       int32
-	Name         string
 	Timestamp    time.Time
 	Measurements vo.Measurement
 }

@@ -17,6 +17,7 @@ import (
 const MQTT_TOPIC = "terrasense/+/measurements"
 
 func main() {
+	// ======= READ FLAG =======
 	isProd := flag.Bool("prod", false, "Set environment as PROD")
 	fmt.Println("Program Starting...")
 	flag.Parse()
@@ -25,12 +26,17 @@ func main() {
 		currentPath, _ := os.Getwd()
 		godotenv.Load(currentPath+"/.env")
 	}
-	ingestorService := &services.IngestorService{
-		Telemetry: protobuf_adapter.New(),
-		Repo:      influxdb.New(influxdb.WithEnvConfig()),
-	}
-	mqtt := mqtt_handler.New(mqtt_handler.WithEnvConfig())
-	mqtt.Start(MQTT_TOPIC, ingestorService.CreateTelemetryHandler())
+
+	// ======= DI =======
+	ingestorService := services.NewIngestorService(
+		protobuf_adapter.New(),
+		influxdb.New(influxdb.WithEnvConfig),
+	)
+	mqtt := mqtt_handler.New(mqtt_handler.WithEnvConfig(*ingestorService))
+	
+	// ======= START MQTT HANDLER =======
+	mqtt.Start() //TODO: manage errors
+	mqtt.Subscribe(MQTT_TOPIC) //TODO: manage errors
 
 	// Wait for a signal to exit the program gracefully
 	sigChan := make(chan os.Signal, 1)

@@ -35,7 +35,7 @@ void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect(MODEL_VERSION, MODEL_VERSION, MQTT_PASSWORD)) {
+    if (client.connect(MODEL_VERSION, MQTT_USERNAME, MQTT_PASSWORD)) {
       Serial.println("connected");
 
       client.subscribe("led_state");   // subscribe the topics here

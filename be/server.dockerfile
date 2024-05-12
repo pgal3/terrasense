@@ -22,4 +22,4 @@ COPY --from=build /app/terrasense_server /terrasense_server
 
 # EXPOSE 3000
 
-ENTRYPOINT ["/terrasense_server"]
+ENTRYPOINT ["/terrasense_server", "--prod"]

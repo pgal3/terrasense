@@ -3,11 +3,13 @@ package mqtt_handler
 import (
 	"log"
 
+	"github.com/PaoloEG/terrasense/internal/core/services"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 type MqttHandler struct {
 	client mqtt.Client
+	service services.IngestorService
 }
 
 type Option func(*MqttHandler)
@@ -20,20 +22,27 @@ func New(options ...Option) *MqttHandler {
 	return client
 }
 
-func (mq *MqttHandler) Start(subTopic string, onMessageReceive func([]byte)) {
+func (mq *MqttHandler) Start() error {
 	if token := mq.client.Connect(); token.Wait() && token.Error() != nil {
 		log.Fatalf("Error in connecting MQTT client: %s", token.Error().Error())
+		return token.Error()
 	}
+	return nil
+}
+
+func (mq *MqttHandler) Subscribe(subTopic string) error {
 	subToken := mq.client.Subscribe(subTopic, 0, func(cl mqtt.Client, m mqtt.Message) {
 		log.Printf("Message received from topic %s", m.Topic())
-		onMessageReceive(m.Payload())
+		go mq.service.TelemetryHandler(m.Payload())
 	})
 	subToken.Wait()
 	if subToken.Error() != nil {
 		mq.client.Disconnect(100)
 		log.Fatalf("Failed to subscribe to topic: %s", subToken.Error().Error())
+		return subToken.Error()
 	}
 	log.Printf("Subscribed to topic %s", subTopic)
+	return nil
 }
 
 func (mq *MqttHandler) Disconnect() {

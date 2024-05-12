@@ -1,7 +1,6 @@
-package protobuf_adapter
+package pb_adapter
 
 import (
-	"log"
 	"time"
 
 	"github.com/PaoloEG/terrasense/internal/core/domain/entities"
@@ -10,30 +9,29 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Adapter struct{}
+type TelemetryPortAdapter struct {}
 
-func New() *Adapter {
-	return &Adapter{}
+func New() *TelemetryPortAdapter {
+	return &TelemetryPortAdapter{}
 }
 
-func (a *Adapter) ExtractData(data []byte) (entities.Telemetry, error) {
+func (t *TelemetryPortAdapter) GetTelemetry(data []byte)(entities.Telemetry, error){
 	pbPayload := &Measurements{}
 	if err := proto.Unmarshal(data, pbPayload); err != nil {
-		log.Println("Error unmarshalling the payload:")
-		log.Println(err.Error())
 		return entities.Telemetry{}, err
 	}
 
 	return entities.Telemetry{
 		Id:        uuid.NewString(),
+		Version:   "1", //TODO: IMPLEMENT VERSION IN THE PROTO
 		ChipID:    pbPayload.ChipID,
 		Timestamp: time.Now(),
-		Measurements: vo.Measurement{
-			Temperature:  pbPayload.Temperature,
-			SoilMoisture: pbPayload.Soil,
-			Humidity:     pbPayload.Humidity,
-			Pressure:     pbPayload.Pressure,
-			Altitude:     pbPayload.Altitude,
-		},
+		Measurements: vo.NewMeasurement(
+			pbPayload.Temperature,
+			pbPayload.Soil,
+			pbPayload.Humidity,
+			pbPayload.Pressure,
+			pbPayload.Altitude,
+		),
 	}, nil
 }

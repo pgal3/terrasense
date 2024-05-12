@@ -4,7 +4,7 @@
 // 	protoc        v4.25.3
 // source: measurements.proto
 
-package protobuf_adapter
+package pb_adapter
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"

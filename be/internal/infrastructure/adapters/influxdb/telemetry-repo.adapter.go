@@ -8,6 +8,7 @@ import (
 	// "time"
 
 	"github.com/PaoloEG/terrasense/internal/core/domain/entities"
+	mappers "github.com/PaoloEG/terrasense/internal/infrastructure/adapters/influxdb/mappers"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
 )
@@ -17,34 +18,21 @@ type Client struct {
 	config influxDBConfig
 }
 
-type Option func(*Client)
-
-func New(options ...Option) *Client {
-	client := &Client{}
-	for _, opt := range options {
-		opt(client)
+func New(config influxDBConfig) *Client {
+	client := &Client{
+		client: influxdb2.NewClientWithOptions(config.Url, config.Token, influxdb2.DefaultOptions().SetUseGZip(true).SetBatchSize(config.BatchSize)),
+		config: config,
 	}
 	return client
 }
 
 func (c *Client) Save(id string, telemetry entities.Telemetry) error {
-	tags := map[string]string{
-		"version":       "1",
-		"sensorID":      fmt.Sprint(telemetry.ChipID),
-		"measurementID": telemetry.Id,
-	}
-	fields := map[string]any{
-		"temperature":  telemetry.Measurements.Temperature,
-		"soilMoisture": telemetry.Measurements.SoilMoisture,
-		"humidity":     telemetry.Measurements.Humidity,
-		"pressure":     telemetry.Measurements.Pressure,
-		"altitude":     telemetry.Measurements.Altitude,
-	}
-	point := write.NewPoint("terrasense_measurements", tags, fields, telemetry.Timestamp)
+	tags := mappers.ToTelemetryTags(telemetry)
+	fields := mappers.ToTelemetryFields(telemetry.Measurements)
+	point := write.NewPoint(c.config.MeasurementsName, tags, fields, telemetry.Timestamp)
 	writeAPI := c.client.WriteAPIBlocking(c.config.Org, c.config.Bucket)
 	if err := writeAPI.WritePoint(context.Background(), point); err != nil {
-		fmt.Println("error in saving point to influxDB")
-		fmt.Println(err.Error())
+		log.Println("Error in saving point to influxDB: ", err.Error())
 		return err
 	}
 	return nil
@@ -54,9 +42,9 @@ func (c *Client) GetLatest(chipID string)(entities.Telemetry, error){
 	queryAPI := c.client.QueryAPI(c.config.Org)
 	query := fmt.Sprintf(`from(bucket: %s)
     |> range(start: 0)
-    |> filter(fn: (r) => r["_measurement"] == "terrasense_measurements")
-	|> filter(fn: (r) => r["sensorID"] == %s)
-    |> last()`, c.config.Bucket, chipID)
+    |> filter(fn: (r) => r["sensorID"] == %s and r["_measurement"] == "terrasense_measurements")
+	|> group(columns: ["_field"])
+    |> last()`, c.config.Bucket, chipID) //TODO: sanitize this values first
 	result, err := queryAPI.Query(context.Background(), query)
 	log.Println(result)
 	log.Println(err)
@@ -64,5 +52,11 @@ func (c *Client) GetLatest(chipID string)(entities.Telemetry, error){
 }
 
 // func (c *Client) GetRange(from time.Time, to time.Time)([]entities.Telemetry, error){
-	
+	/*
+	//Possible query:
+	`from(bucket: "terrasense_bucket")
+  	|> range(start: -1h, stop: -1m)
+	|> filter(fn: (r) => r.sensorID == "2703511" and r._measurement == "terrasense_measurements")
+  	|> group(columns: ["measurementID"])`
+	*/
 // }

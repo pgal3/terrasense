@@ -7,19 +7,24 @@ import (
 )
 
 type IngestorService struct {
-	Telemetry ports.TelemetryUtilsPort
-	Repo      ports.TelemetryRepoPort
+	telemetry ports.TelemetryPort
+	repo      ports.TelemetryRepoPort
 }
 
-func (s *IngestorService) CreateTelemetryHandler() func([]byte){
-	return func(data []byte){
-		telemetry, extractError := s.Telemetry.ExtractData(data)
+func NewIngestorService(telemetryPort ports.TelemetryPort, telemetryRepo ports.TelemetryRepoPort) *IngestorService {
+	return &IngestorService{
+		telemetry: telemetryPort,
+		repo: telemetryRepo,
+	}
+}
+
+func (s *IngestorService) TelemetryHandler(data []byte){
+		telemetry, extractError := s.telemetry.GetTelemetry(data)
 		if extractError != nil {
 			log.Printf("error extracting telemetry: %s", extractError.Error())
 		}
-		repoError := s.Repo.Save(telemetry.Id, telemetry)
+		repoError := s.repo.Save(telemetry.Id, telemetry)
 		if repoError != nil {
 			log.Printf("error saving telemetry: %s", repoError.Error())
 		}
-	}
 }

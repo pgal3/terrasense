@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -8,8 +9,9 @@ import (
 	"syscall"
 
 	"github.com/PaoloEG/terrasense/internal/core/services"
-	"github.com/PaoloEG/terrasense/internal/infrastructure/adapters/influxdb"
+	pg_adapter "github.com/PaoloEG/terrasense/internal/infrastructure/adapters/postgreSQL"
 	protobuf_adapter "github.com/PaoloEG/terrasense/internal/infrastructure/adapters/protobuf"
+	http_handler "github.com/PaoloEG/terrasense/internal/infrastructure/handlers/http"
 	mqtt_handler "github.com/PaoloEG/terrasense/internal/infrastructure/handlers/mqtt"
 	"github.com/joho/godotenv"
 )
@@ -28,15 +30,25 @@ func main() {
 	}
 
 	// ======= DI =======
+	telemetryRepo := pg_adapter.New(pg_adapter.WithEnvConfig, context.Background())
+	defer telemetryRepo.Close()
+
 	ingestorService := services.NewIngestorService(
 		protobuf_adapter.New(),
-		influxdb.New(influxdb.WithEnvConfig),
+		telemetryRepo,
 	)
-	mqtt := mqtt_handler.New(mqtt_handler.WithEnvConfig(*ingestorService))
-	
+	measurementService := services.NewMeasurementsService(telemetryRepo)
+
+	// ======= Initialize Handlers =======
+	mqtt := mqtt_handler.New(mqtt_handler.WithEnvConfig(ingestorService))
+	http := http_handler.New(measurementService, *isProd)
+
 	// ======= START MQTT HANDLER =======
 	mqtt.Start() //TODO: manage errors
 	mqtt.Subscribe(MQTT_TOPIC) //TODO: manage errors
+
+	// ======= START HTTP HANDLER =======
+	http.Start("3000")
 
 	// Wait for a signal to exit the program gracefully
 	sigChan := make(chan os.Signal, 1)

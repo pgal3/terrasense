@@ -7,7 +7,7 @@ import (
 
 type TelemetryRepoPort interface {
 	Save(id string, telemetry entities.Telemetry) error
-	GetLatest(chipID string)(entities.Telemetry, error)
+	GetLatest(chipID int32)(entities.Telemetry, error)
 	// GetRange(from time.Time, to time.Time)([]entities.Telemetry, error)
 	// Delete(id string) error
 }

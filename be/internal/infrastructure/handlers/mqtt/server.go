@@ -1,4 +1,4 @@
-package mqtt_handler
+package mqtt_hdl
 
 import (
 	"log"
@@ -8,8 +8,8 @@ import (
 )
 
 type MqttHandler struct {
-	client mqtt.Client
-	service services.IngestorService
+	client 	mqtt.Client
+	service *services.IngestorService
 }
 
 type Option func(*MqttHandler)

@@ -1,7 +1,7 @@
 package errors
 
 type ForbiddenError struct {
-	Message string
+	Message string `json:"message,omitempty"`
 }
 
 func (e *ForbiddenError) Error() string {

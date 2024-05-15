@@ -1,8 +1,8 @@
 package errors
 
 type InvalidInputError struct {
-	Message string
-	Details map[string]any
+	Message string         `json:"message,omitempty"`
+	Details map[string]any `json:"details,omitempty"`
 }
 
 func (e *InvalidInputError) Error() string {

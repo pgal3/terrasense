@@ -6,9 +6,15 @@ import (
 )
 
 type MeasurementsService struct {
-	Repo      ports.TelemetryRepoPort
+	repo      ports.TelemetryRepoPort
 }
 
-func (s * MeasurementsService) GetLatestMeasurement(chipID string)(entities.Telemetry, error) {
-	return s.Repo.GetLatest(chipID)
+func NewMeasurementsService(telemetryRepo ports.TelemetryRepoPort) *MeasurementsService {
+	return &MeasurementsService{
+		repo: telemetryRepo,
+	}
+}
+
+func (s * MeasurementsService) GetLatestMeasurement(chipID int32)(entities.Telemetry, error) {
+	return s.repo.GetLatest(chipID)
 }

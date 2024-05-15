@@ -7,9 +7,9 @@ import (
 )
 
 type Telemetry struct {
-	Id           string
-	ChipID       int32
-	Version		 string
-	Timestamp    time.Time
-	Measurements vo.Measurement
+	ID          string
+	ChipID      int32
+	Version     string
+	Timestamp   time.Time
+	Measurement vo.Measurement
 }

@@ -1,4 +1,4 @@
-package mqtt_handler
+package mqtt_hdl
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-func WithEnvConfig(srv services.IngestorService) func(*MqttHandler) {
+func WithEnvConfig(srv *services.IngestorService) func(*MqttHandler) {
 	return func(h *MqttHandler){
 		config := mqtt.NewClientOptions()
 		config.AddBroker(fmt.Sprintf("ssl://%s:%s/mqtt", os.Getenv("MQTT_HOST"), os.Getenv("MQTT_PORT")))

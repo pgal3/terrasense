@@ -9,17 +9,17 @@ type Measurement struct {
 }
 
 func NewMeasurement(
-	t float32,
-	sm float32,
-	h float32,
-	p float32,
-	a float32) Measurement {
+	temperature float32,
+	soilMoisture float32,
+	humidity float32,
+	pressure float32,
+	altitude float32) Measurement {
 	return Measurement{
-		temperature:  t,
-		soilMoisture: sm,
-		humidity:     h,
-		pressure:     p,
-		altitude:     a,
+		temperature:  temperature,
+		soilMoisture: soilMoisture,
+		humidity:     humidity,
+		pressure:     pressure,
+		altitude:     altitude,
 	}
 }
 

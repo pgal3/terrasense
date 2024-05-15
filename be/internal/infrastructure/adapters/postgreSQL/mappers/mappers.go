@@ -1,0 +1,37 @@
+package pg_mappers
+
+import (
+	"github.com/PaoloEG/terrasense/internal/core/domain/entities"
+	vo "github.com/PaoloEG/terrasense/internal/core/domain/value-objects"
+	pg_models "github.com/PaoloEG/terrasense/internal/infrastructure/adapters/postgreSQL/models"
+)
+
+func MapMeasurement(telemetry entities.Telemetry) pg_models.Measurement {
+	return pg_models.Measurement{
+		ID: telemetry.ID,
+		ChipID: telemetry.ChipID,
+		Timestamp: telemetry.Timestamp,
+		Version: telemetry.Version,
+		Temperature: telemetry.Measurement.Temperature(),
+		Humidity: telemetry.Measurement.Humidity(),
+		Altitude: telemetry.Measurement.Altitude(),
+		SoilMoisture: telemetry.Measurement.SoilMoisture(),
+		Pressure: telemetry.Measurement.Pressure(),
+	}
+}
+
+func MapTelemetry(ms pg_models.Measurement) entities.Telemetry {
+	return entities.Telemetry{
+		ID: ms.ID,
+		ChipID: ms.ChipID,
+		Version: ms.Version,
+		Timestamp: ms.Timestamp,
+		Measurement: vo.NewMeasurement(
+			ms.Temperature,
+			ms.SoilMoisture,
+			ms.Humidity,
+			ms.Pressure,
+			ms.Altitude,
+		),
+	}
+}

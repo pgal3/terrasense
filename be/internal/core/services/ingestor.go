@@ -1,8 +1,6 @@
 package services
 
 import (
-	"log"
-
 	"github.com/PaoloEG/terrasense/internal/core/ports"
 )
 
@@ -18,13 +16,14 @@ func NewIngestorService(telemetryPort ports.TelemetryPort, telemetryRepo ports.T
 	}
 }
 
-func (s *IngestorService) TelemetryHandler(data []byte){
+func (s *IngestorService) TelemetryHandler(data []byte) error {
 		telemetry, extractError := s.telemetry.GetTelemetry(data)
 		if extractError != nil {
-			log.Printf("error extracting telemetry: %s", extractError.Error())
+			return extractError
 		}
-		repoError := s.repo.Save(telemetry.Id, telemetry)
+		repoError := s.repo.Save(telemetry.ID, telemetry)
 		if repoError != nil {
-			log.Printf("error saving telemetry: %s", repoError.Error())
+			return repoError
 		}
+		return nil
 }

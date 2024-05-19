@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/PaoloEG/terrasense/internal/core/domain/entities"
 	"github.com/PaoloEG/terrasense/internal/core/domain/errors"
@@ -74,6 +75,31 @@ func(c *Client) GetLatest(chipID int32)(entities.Telemetry, error){
 	}
 	telemetry := pg_mappers.MapTelemetry(measurement)
 	return telemetry, nil
+}
+
+func(c *Client) GetRange(chipID int32, from time.Time, to time.Time)([]entities.Telemetry, error){
+	measurements := []pg_models.Measurement{}
+	query := c.bundb.NewSelect().Model(&measurements).Where("chip_id = ?", chipID)
+	if !from.IsZero() {
+		query.Where("timestamp >= ?", from)
+	}
+	if !to.IsZero() {
+		query.Where("timestamp <= ?", to)
+	} 
+	err := query.OrderExpr("timestamp DESC").Scan(c.ctx)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return []entities.Telemetry{}, &errors.NotFoundError{
+				Message: "No measurements found",
+			}
+		}
+		return []entities.Telemetry{}, &errors.InternalServerError{
+			Message: "Error in running DB query",
+			OriginalError: err.Error(),
+		}
+	}
+	telemetries := pg_mappers.MapTelemetries(measurements)
+	return telemetries, nil
 }
 
 func(c *Client) Close(){

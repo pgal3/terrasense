@@ -5,6 +5,7 @@ import (
 
 	"github.com/PaoloEG/terrasense/internal/core/services"
 	"github.com/PaoloEG/terrasense/internal/infrastructure/handlers/http/handlers"
+	http_middlewares "github.com/PaoloEG/terrasense/internal/infrastructure/handlers/http/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,6 +25,8 @@ func New(msSrv *services.MeasurementsService, isProd bool) *HttpHandler {
 }
 
 func (h *HttpHandler) Start(port string) {
+	// Add middlewares
+	h.server.Use(http_middlewares.ErrorsHandler())
 	// Add routes
 	h.server.GET("/telemetries/:chipID/latest", handlers.GetLatestHandler(h.msService))
 	h.server.GET("/telemetries/:chipID", handlers.GetRangeHandler(h.msService))

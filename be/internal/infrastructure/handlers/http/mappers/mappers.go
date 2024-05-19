@@ -9,13 +9,31 @@ import (
 func ToTelemetryResponse(telemetry entities.Telemetry) http_res.LatestTelemetryResponse {
 	return http_res.LatestTelemetryResponse{
 		Timestamp: telemetry.Timestamp.Local(),
-		ID: telemetry.ID,
+		ID:        telemetry.ID,
 		Measurement: http_dtos.MeasurementDto{
-			Temperature: telemetry.Measurement.Temperature(),
+			Temperature:  telemetry.Measurement.Temperature(),
 			SoilMoisture: telemetry.Measurement.SoilMoisture(),
-			Humidity: telemetry.Measurement.Humidity(),
-			Pressure: telemetry.Measurement.Pressure(),
-			Altitude: telemetry.Measurement.Altitude(),
+			Humidity:     telemetry.Measurement.Humidity(),
+			Pressure:     telemetry.Measurement.Pressure(),
+			Altitude:     telemetry.Measurement.Altitude(),
 		},
 	}
+}
+
+func ToTelemetryRangeResponse(telemetries []entities.Telemetry) http_res.RangeTelemetryResponse {
+	res := http_res.RangeTelemetryResponse{}
+	for _, telemetry := range telemetries {
+		res = append(res, http_res.LatestTelemetryResponse{
+			Timestamp: telemetry.Timestamp.Local(),
+			ID:        telemetry.ID,
+			Measurement: http_dtos.MeasurementDto{
+				Temperature:  telemetry.Measurement.Temperature(),
+				SoilMoisture: telemetry.Measurement.SoilMoisture(),
+				Humidity:     telemetry.Measurement.Humidity(),
+				Pressure:     telemetry.Measurement.Pressure(),
+				Altitude:     telemetry.Measurement.Altitude(),
+			},
+		})
+	}
+	return res
 }

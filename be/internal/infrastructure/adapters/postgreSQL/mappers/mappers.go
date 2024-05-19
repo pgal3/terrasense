@@ -35,3 +35,23 @@ func MapTelemetry(ms pg_models.Measurement) entities.Telemetry {
 		),
 	}
 }
+
+func MapTelemetries(ms []pg_models.Measurement) []entities.Telemetry {
+	telemetries := []entities.Telemetry{}
+	for _, val := range ms {
+		telemetries = append(telemetries, entities.Telemetry{
+			ID: val.ID,
+			ChipID: val.ChipID,
+			Version: val.Version,
+			Timestamp: val.Timestamp,
+			Measurement: vo.NewMeasurement(
+				val.Temperature,
+				val.SoilMoisture,
+				val.Humidity,
+				val.Pressure,
+				val.Altitude,
+			),
+		})
+	}
+	return telemetries
+}

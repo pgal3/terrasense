@@ -11,28 +11,22 @@ import (
 )
 
 func GetLatestHandler(service *services.MeasurementsService) gin.HandlerFunc {
-	return func(c *gin.Context){
+	return func(c *gin.Context) {
 		chipIDString := c.Param("chipID")
 		val, err := strconv.ParseInt(chipIDString, 10, 32)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, &errors.InvalidInputError{
+			c.Error(&errors.InvalidInputError{
 				Message: "Invalid chipID parameter",
 				Details: map[string]any{"original": err.Error()},
-			})
+			}) 
 			return
 		}
 		chipID := int32(val)
 		latestTelemetry, serviceError := service.GetLatestMeasurement(chipID)
 		if serviceError != nil {
-			switch serviceError.(type) {
-			case *errors.NotFoundError:
-				c.JSON(http.StatusNotFound, serviceError)
-			default:
-				c.JSON(http.StatusInternalServerError, serviceError)
-			}
+			c.Error(serviceError) 
 			return
 		}
 		c.JSON(http.StatusOK, http_mappers.ToTelemetryResponse(latestTelemetry))
 	}
 }
-

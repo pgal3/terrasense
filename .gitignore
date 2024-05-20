@@ -1,6 +1,5 @@
 firmware/terrasense_arduino/conf.h
-secrets
-**/.env
+**/*.env
 .DS_Store
 *.exe
 *.exe~

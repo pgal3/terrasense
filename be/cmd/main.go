@@ -26,7 +26,7 @@ func main() {
 	if !*isProd {
 		fmt.Println("Loading .env")
 		currentPath, _ := os.Getwd()
-		godotenv.Load(currentPath + "/.env")
+		godotenv.Load(currentPath + "/local.env")
 	}
 
 	// ======= DI =======

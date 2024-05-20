@@ -83,6 +83,17 @@ func (c *Client) GetRange(chipID int32, from time.Time, to time.Time) ([]entitie
 	return telemetries, nil
 }
 
+func (c *Client) Delete(id string) error {
+	delete := c.db.Delete(&pg_models.Measurement{}, id)
+	if delete.Error != nil {
+		return &errors.InternalServerError{
+			Message:       "Error in running DB delete",
+			OriginalError: delete.Error.Error(),
+		}
+	}
+	return nil
+}
+
 func (c *Client) Close() {
 	db, _ := c.db.DB()
 	db.Close()

@@ -18,13 +18,13 @@ func GetLatestHandler(service *services.MeasurementsService) gin.HandlerFunc {
 			c.Error(&errors.InvalidInputError{
 				Message: "Invalid chipID parameter",
 				Details: map[string]any{"original": err.Error()},
-			}) 
+			})
 			return
 		}
 		chipID := int32(val)
 		latestTelemetry, serviceError := service.GetLatestMeasurement(chipID)
 		if serviceError != nil {
-			c.Error(serviceError) 
+			c.Error(serviceError)
 			return
 		}
 		c.JSON(http.StatusOK, http_mappers.ToTelemetryResponse(latestTelemetry))

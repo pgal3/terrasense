@@ -2,7 +2,6 @@ package pg_adapter
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -10,99 +9,81 @@ import (
 	"github.com/PaoloEG/terrasense/internal/core/domain/errors"
 	pg_mappers "github.com/PaoloEG/terrasense/internal/infrastructure/adapters/postgreSQL/mappers"
 	pg_models "github.com/PaoloEG/terrasense/internal/infrastructure/adapters/postgreSQL/models"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
-	"github.com/uptrace/bun/extra/bundebug"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type Client struct {
-	pgdb 	*sql.DB
-	bundb 	*bun.DB
-	config  PostgreSQLConfig
-	ctx		context.Context
+	db     *gorm.DB
+	config PostgreSQLConfig
+	ctx    context.Context
 }
 
 func New(config PostgreSQLConfig, ctx context.Context) *Client {
-	db := sql.OpenDB(pgdriver.NewConnector(
-		pgdriver.WithAddr(fmt.Sprintf("%s:%s",config.Url,config.Port)),
-		pgdriver.WithUser(config.User),
-		pgdriver.WithPassword(config.Pwd),
-		pgdriver.WithInsecure(true),
-		))
-	bundb := bun.NewDB(db, pgdialect.New())
-	bundb.AddQueryHook(bundebug.NewQueryHook(
-		bundebug.WithVerbose(false),
-		// bundebug.FromEnv("BUNDEBUG"),
-		bundebug.WithEnabled(true),
-	))
+	dns := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", config.Url, config.User, config.Pwd, config.DBName, config.Port)
+	db, err := gorm.Open(postgres.Open(dns), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
 
-	pg_models.SetUpMeasurementTable(bundb)
+	//Setup Tables
+	db.AutoMigrate(&pg_models.Measurement{})
 
 	return &Client{
-		pgdb: db,
-		bundb: bundb,
+		db:     db,
 		config: config,
-		ctx: ctx,
+		ctx:    ctx,
 	}
 }
 
-func(c *Client) Save(id string, telemetry entities.Telemetry) error {
+func (c *Client) Save(id string, telemetry entities.Telemetry) error {
 	dbMeasurement := pg_mappers.MapMeasurement(telemetry)
-	_, err := c.bundb.NewInsert().Model(&dbMeasurement).Exec(c.ctx)
-	if err != nil {
+	res := c.db.Create(&dbMeasurement)
+	if res.Error != nil {
 		return &errors.InternalServerError{
-			Message: "Error in saving telemetry in DB",
-			OriginalError: err.Error(),
+			Message:       "Error in saving telemetry in DB",
+			OriginalError: res.Error.Error(),
 		}
 	}
 	return nil
 }
 
-func(c *Client) GetLatest(chipID int32)(entities.Telemetry, error){
+func (c *Client) GetLatest(chipID int32) (entities.Telemetry, error) {
 	measurement := pg_models.Measurement{}
-	err := c.bundb.NewSelect().Model(&measurement).Where("chip_id = ?", chipID).Limit(1).OrderExpr("timestamp DESC").Scan(c.ctx)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+	res := c.db.Order("timestamp DESC").Where("chip_id = ?", chipID).Last(&measurement)
+	if res.Error != nil {
+		if res.Error == gorm.ErrRecordNotFound {
 			return entities.Telemetry{}, &errors.NotFoundError{
 				Message: "No measurements found",
 			}
 		}
 		return entities.Telemetry{}, &errors.InternalServerError{
-			Message: "Error in running DB query",
-			OriginalError: err.Error(),
+			Message:       "Error in running DB query",
+			OriginalError: res.Error.Error(),
 		}
 	}
 	telemetry := pg_mappers.MapTelemetry(measurement)
 	return telemetry, nil
 }
 
-func(c *Client) GetRange(chipID int32, from time.Time, to time.Time)([]entities.Telemetry, error){
+func (c *Client) GetRange(chipID int32, from time.Time, to time.Time) ([]entities.Telemetry, error) {
 	measurements := []pg_models.Measurement{}
-	query := c.bundb.NewSelect().Model(&measurements).Where("chip_id = ?", chipID)
-	if !from.IsZero() {
-		query.Where("timestamp >= ?", from)
-	}
+	query := c.db.Where("chip_id = ?", chipID)
 	if !to.IsZero() {
 		query.Where("timestamp <= ?", to)
-	} 
-	err := query.OrderExpr("timestamp DESC").Scan(c.ctx)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			return []entities.Telemetry{}, &errors.NotFoundError{
-				Message: "No measurements found",
-			}
-		}
+	}
+	res := query.Order("timestamp DESC").Find(&measurements)
+	if res.Error != nil {
 		return []entities.Telemetry{}, &errors.InternalServerError{
-			Message: "Error in running DB query",
-			OriginalError: err.Error(),
+			Message:       "Error in running DB query",
+			OriginalError: res.Error.Error(),
 		}
 	}
 	telemetries := pg_mappers.MapTelemetries(measurements)
 	return telemetries, nil
 }
 
-func(c *Client) Close(){
-	c.bundb.Close()
-	c.pgdb.Close()
+func (c *Client) Close() {
+	db, _ := c.db.DB()
+	db.Close()
 }

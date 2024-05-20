@@ -9,7 +9,7 @@ import (
 )
 
 func WithEnvConfig(srv *services.IngestorService) func(*MqttHandler) {
-	return func(h *MqttHandler){
+	return func(h *MqttHandler) {
 		config := mqtt.NewClientOptions()
 		config.AddBroker(fmt.Sprintf("ssl://%s:%s/mqtt", os.Getenv("MQTT_HOST"), os.Getenv("MQTT_PORT")))
 		config.SetClientID(os.Getenv("MQTT_CLIENTID"))

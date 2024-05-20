@@ -10,17 +10,17 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type TelemetryPortAdapter struct {}
+type TelemetryPortAdapter struct{}
 
 func New() *TelemetryPortAdapter {
 	return &TelemetryPortAdapter{}
 }
 
-func (t *TelemetryPortAdapter) GetTelemetry(data []byte)(entities.Telemetry, error){
+func (t *TelemetryPortAdapter) GetTelemetry(data []byte) (entities.Telemetry, error) {
 	pbPayload := &Measurements{}
 	if err := proto.Unmarshal(data, pbPayload); err != nil {
 		return entities.Telemetry{}, &errors.InternalServerError{
-			Message: "Error converting incoming protobuf",
+			Message:       "Error converting incoming protobuf",
 			OriginalError: err.Error(),
 		}
 	}

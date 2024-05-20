@@ -12,18 +12,18 @@ type IngestorService struct {
 func NewIngestorService(telemetryPort ports.TelemetryPort, telemetryRepo ports.TelemetryRepoPort) *IngestorService {
 	return &IngestorService{
 		telemetry: telemetryPort,
-		repo: telemetryRepo,
+		repo:      telemetryRepo,
 	}
 }
 
 func (s *IngestorService) TelemetryHandler(data []byte) error {
-		telemetry, extractError := s.telemetry.GetTelemetry(data)
-		if extractError != nil {
-			return extractError
-		}
-		repoError := s.repo.Save(telemetry.ID, telemetry)
-		if repoError != nil {
-			return repoError
-		}
-		return nil
+	telemetry, extractError := s.telemetry.GetTelemetry(data)
+	if extractError != nil {
+		return extractError
+	}
+	repoError := s.repo.Save(telemetry.ID, telemetry)
+	if repoError != nil {
+		return repoError
+	}
+	return nil
 }

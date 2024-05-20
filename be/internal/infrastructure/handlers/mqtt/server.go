@@ -3,12 +3,13 @@ package mqtt_hdl
 import (
 	"log"
 
+	"github.com/PaoloEG/terrasense/internal/core/domain/errors"
 	"github.com/PaoloEG/terrasense/internal/core/services"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 type MqttHandler struct {
-	client 	mqtt.Client
+	client  mqtt.Client
 	service *services.IngestorService
 }
 
@@ -24,8 +25,12 @@ func New(options ...Option) *MqttHandler {
 
 func (mq *MqttHandler) Start() error {
 	if token := mq.client.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatalf("Error in connecting MQTT client: %s", token.Error().Error())
-		return token.Error()
+		return &errors.UnknownError{
+			Message: "Error in connecting MQTT client",
+			Details: map[string]any{
+				"original": token.Error().Error(),
+			},
+		}
 	}
 	return nil
 }
@@ -46,6 +51,6 @@ func (mq *MqttHandler) Subscribe(subTopic string) error {
 }
 
 func (mq *MqttHandler) Disconnect() {
-		log.Println("Disconnecting MQTT client")
-		mq.client.Disconnect(300)
+	log.Println("Disconnecting MQTT client")
+	mq.client.Disconnect(300)
 }

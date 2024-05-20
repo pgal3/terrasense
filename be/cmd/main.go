@@ -23,10 +23,10 @@ func main() {
 	isProd := flag.Bool("prod", false, "Set environment as PROD")
 	fmt.Println("Program Starting...")
 	flag.Parse()
-	if(!*isProd){
+	if !*isProd {
 		fmt.Println("Loading .env")
 		currentPath, _ := os.Getwd()
-		godotenv.Load(currentPath+"/.env")
+		godotenv.Load(currentPath + "/.env")
 	}
 
 	// ======= DI =======
@@ -44,7 +44,7 @@ func main() {
 	http := http_handler.New(measurementService, *isProd)
 
 	// ======= START MQTT HANDLER =======
-	mqtt.Start() //TODO: manage errors
+	mqtt.Start()               //TODO: manage errors
 	mqtt.Subscribe(MQTT_TOPIC) //TODO: manage errors
 
 	// ======= START HTTP HANDLER =======

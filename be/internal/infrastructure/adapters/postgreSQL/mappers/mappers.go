@@ -8,23 +8,23 @@ import (
 
 func MapMeasurement(telemetry entities.Telemetry) pg_models.Measurement {
 	return pg_models.Measurement{
-		ID: telemetry.ID,
-		ChipID: telemetry.ChipID,
-		Timestamp: telemetry.Timestamp,
-		Version: telemetry.Version,
-		Temperature: telemetry.Measurement.Temperature(),
-		Humidity: telemetry.Measurement.Humidity(),
-		Altitude: telemetry.Measurement.Altitude(),
+		ID:           telemetry.ID,
+		ChipID:       telemetry.ChipID,
+		Timestamp:    telemetry.Timestamp,
+		Version:      telemetry.Version,
+		Temperature:  telemetry.Measurement.Temperature(),
+		Humidity:     telemetry.Measurement.Humidity(),
+		Altitude:     telemetry.Measurement.Altitude(),
 		SoilMoisture: telemetry.Measurement.SoilMoisture(),
-		Pressure: telemetry.Measurement.Pressure(),
+		Pressure:     telemetry.Measurement.Pressure(),
 	}
 }
 
 func MapTelemetry(ms pg_models.Measurement) entities.Telemetry {
 	return entities.Telemetry{
-		ID: ms.ID,
-		ChipID: ms.ChipID,
-		Version: ms.Version,
+		ID:        ms.ID,
+		ChipID:    ms.ChipID,
+		Version:   ms.Version,
 		Timestamp: ms.Timestamp,
 		Measurement: vo.NewMeasurement(
 			ms.Temperature,
@@ -40,9 +40,9 @@ func MapTelemetries(ms []pg_models.Measurement) []entities.Telemetry {
 	telemetries := []entities.Telemetry{}
 	for _, val := range ms {
 		telemetries = append(telemetries, entities.Telemetry{
-			ID: val.ID,
-			ChipID: val.ChipID,
-			Version: val.Version,
+			ID:        val.ID,
+			ChipID:    val.ChipID,
+			Version:   val.Version,
 			Timestamp: val.Timestamp,
 			Measurement: vo.NewMeasurement(
 				val.Temperature,

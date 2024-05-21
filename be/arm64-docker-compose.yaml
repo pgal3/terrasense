@@ -4,7 +4,7 @@ services:
   db:
     image: arm64v8/postgres:alpine
     env_file:
-      - deploy.env
+      - .env
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -15,7 +15,7 @@ services:
       context: .
       dockerfile: arm64-server.dockerfile
     env_file:
-      - deploy.env
+      - .env
     ports:
       - "3000:3000"
     depends_on:

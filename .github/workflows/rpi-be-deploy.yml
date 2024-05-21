@@ -1,0 +1,32 @@
+name: rpi-be-deploy
+
+on:
+  push:
+    branches: [deploy]
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env file
+        uses: SpicyPizza/create-envfile@v2.0.3
+        with:
+          envkey_MQTT_HOST: ${{ vars.MQTT_HOST }}
+          envkey_MQTT_PORT: ${{ vars.MQTT_PORT }}
+          envkey_MQTT_CLIENTID: ${{ vars.MQTT_CLIENTID }}
+          envkey_MQTT_USERNAME: ${{ vars.MQTT_USERNAME }}
+          envkey_MQTT_PWD: ${{ secrets.MQTT_PWD }}
+          envkey_POSTGRES_URL: ${{ vars.POSTGRES_URL }}
+          envkey_POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
+          envkey_POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          envkey_POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          envkey_POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          directory: be
+          file_name: .env
+          fail_on_empty: true
+
+      - name: Run docker-compose
+        run: cd be && docker compose -f arm64-docker-compose.yaml up --build --force-recreate -d

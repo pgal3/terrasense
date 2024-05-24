@@ -6,7 +6,7 @@ import (
 	pg_models "github.com/PaoloEG/terrasense/internal/infrastructure/adapters/postgreSQL/models"
 )
 
-func MapMeasurement(telemetry entities.Telemetry) pg_models.Measurement {
+func ToMeasurementModel(telemetry entities.Telemetry) pg_models.Measurement {
 	return pg_models.Measurement{
 		ID:           telemetry.ID,
 		ChipID:       telemetry.ChipID,
@@ -20,7 +20,7 @@ func MapMeasurement(telemetry entities.Telemetry) pg_models.Measurement {
 	}
 }
 
-func MapTelemetry(ms pg_models.Measurement) entities.Telemetry {
+func ToTelemetryEntity(ms pg_models.Measurement) entities.Telemetry {
 	return entities.Telemetry{
 		ID:        ms.ID,
 		ChipID:    ms.ChipID,
@@ -36,7 +36,7 @@ func MapTelemetry(ms pg_models.Measurement) entities.Telemetry {
 	}
 }
 
-func MapTelemetries(ms []pg_models.Measurement) []entities.Telemetry {
+func ToTelemetryEntities(ms []pg_models.Measurement) []entities.Telemetry {
 	telemetries := []entities.Telemetry{}
 	for _, val := range ms {
 		telemetries = append(telemetries, entities.Telemetry{

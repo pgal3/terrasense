@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -30,8 +29,8 @@ func main() {
 	}
 
 	// ======= DI =======
-	telemetryRepo := pg_adapter.New(pg_adapter.WithEnvConfig, context.Background())
-	defer telemetryRepo.Close()
+	dbClient := pg_adapter.NewDBClient(pg_adapter.WithEnvConfig)
+	telemetryRepo := pg_adapter.NewTelemetryRepoAdapter(dbClient)
 
 	ingestorService := services.NewIngestorService(
 		protobuf_adapter.New(),

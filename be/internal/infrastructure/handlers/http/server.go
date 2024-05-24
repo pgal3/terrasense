@@ -25,6 +25,7 @@ func New(msSrv *services.MeasurementsService, isProd bool) *HttpHandler {
 }
 
 func (h *HttpHandler) Start(port string) {
+	h.server.SetTrustedProxies(nil)
 	// Add middlewares
 	h.server.Use(http_middlewares.ErrorsHandler())
 	// Add routes

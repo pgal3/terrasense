@@ -8,7 +8,7 @@ import (
 
 func ToTelemetryResponse(telemetry entities.Telemetry) http_res.LatestTelemetryResponse {
 	return http_res.LatestTelemetryResponse{
-		Timestamp: telemetry.Timestamp.Local(),
+		Timestamp: telemetry.Timestamp.UTC(),
 		ID:        telemetry.ID,
 		Measurement: http_dtos.MeasurementDto{
 			Temperature:  telemetry.Measurement.Temperature(),
@@ -24,7 +24,7 @@ func ToTelemetryRangeResponse(telemetries []entities.Telemetry) http_res.RangeTe
 	res := http_res.RangeTelemetryResponse{}
 	for _, telemetry := range telemetries {
 		res = append(res, http_res.LatestTelemetryResponse{
-			Timestamp: telemetry.Timestamp,
+			Timestamp: telemetry.Timestamp.UTC(),
 			ID:        telemetry.ID,
 			Measurement: http_dtos.MeasurementDto{
 				Temperature:  telemetry.Measurement.Temperature(),

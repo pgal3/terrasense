@@ -32,12 +32,14 @@ func (mq *MqttHandler) Start() error {
 			},
 		}
 	}
+	opts := mqtt.ClientOptionsReader(mq.client.OptionsReader())
+	log.Println("Connected to MQTT - ClientID:",opts.ClientID())
 	return nil
 }
 
 func (mq *MqttHandler) Subscribe(subTopic string) error {
 	subToken := mq.client.Subscribe(subTopic, 0, func(cl mqtt.Client, m mqtt.Message) {
-		log.Printf("Message received from topic %s", m.Topic())
+		log.Println("Message received from topic", m.Topic())
 		go mq.service.TelemetryHandler(m.Payload())
 	})
 	subToken.Wait()

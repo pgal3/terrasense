@@ -86,7 +86,6 @@ void setup() {
 
   while (!bme.begin()) {
     Serial.println("Could not find BME280 sensor!");
-    delay(1000);
   }
   wifiManager.autoConnect("TerraSense_AP");
 
@@ -96,12 +95,13 @@ void setup() {
 
 //////////////////////////////////////////////////////////////////
 void loop() {
+  delay(100);
   Serial.println("Entering the loop");
   if (!client.connected()) reconnect();
   int sum = 0;
   for(int i=0; i<SAMPLING_SIZE; i++){
     sum += analogRead(A0);
-    delay(2);
+    delay(10);
   }
   soilMoistureValue = sum/SAMPLING_SIZE;
   bme.read(pres, temp, hum, tempUnit, presUnit);
@@ -110,5 +110,5 @@ void loop() {
   sendMeasurement(PUB_TOPIC, measurements, false);
   Serial.println("now let's take a nap...");
   // ESP.deepSleep(SLEEP_TIME); //deep sleep
-  delay(SLEEP_TIME); //delay - in case of powerbank connection
+  delay(7.2e6); //delay - in case of powerbank connection - 2 hours
 }

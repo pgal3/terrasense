@@ -29,7 +29,7 @@ func (t *TelemetryPortAdapter) GetTelemetry(data []byte) (entities.Telemetry, er
 		ID:        uuid.NewString(),
 		Version:   "1", //TODO: IMPLEMENT VERSION IN THE PROTO
 		ChipID:    pbPayload.ChipID,
-		Timestamp: time.Now(),
+		Timestamp: time.Now().UTC(),
 		Measurement: vo.NewMeasurement(
 			pbPayload.Temperature,
 			pbPayload.Soil,

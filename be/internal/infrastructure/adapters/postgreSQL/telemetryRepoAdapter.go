@@ -1,43 +1,27 @@
 package pg_adapter
 
 import (
-	"context"
-	"fmt"
 	"time"
 
 	"github.com/PaoloEG/terrasense/internal/core/domain/entities"
 	"github.com/PaoloEG/terrasense/internal/core/domain/errors"
 	pg_mappers "github.com/PaoloEG/terrasense/internal/infrastructure/adapters/postgreSQL/mappers"
 	pg_models "github.com/PaoloEG/terrasense/internal/infrastructure/adapters/postgreSQL/models"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-type Client struct {
-	db     *gorm.DB
-	config PostgreSQLConfig
-	ctx    context.Context
+type TelemetryRepoAdapter struct {
+	db *gorm.DB
 }
 
-func New(config PostgreSQLConfig, ctx context.Context) *Client {
-	dns := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", config.Url, config.User, config.Pwd, config.DBName, config.Port)
-	db, err := gorm.Open(postgres.Open(dns), &gorm.Config{})
-	if err != nil {
-		panic("failed to connect database")
-	}
-
-	//Setup Tables
-	db.AutoMigrate(&pg_models.Measurement{})
-
-	return &Client{
-		db:     db,
-		config: config,
-		ctx:    ctx,
+func NewTelemetryRepoAdapter(dbClient *gorm.DB) *TelemetryRepoAdapter{
+	return &TelemetryRepoAdapter{
+		db: dbClient,
 	}
 }
 
-func (c *Client) Save(id string, telemetry entities.Telemetry) error {
-	dbMeasurement := pg_mappers.MapMeasurement(telemetry)
+func (c *TelemetryRepoAdapter) Save(id string, telemetry entities.Telemetry) error {
+	dbMeasurement := pg_mappers.ToMeasurementModel(telemetry)
 	res := c.db.Create(&dbMeasurement)
 	if res.Error != nil {
 		return &errors.InternalServerError{
@@ -48,7 +32,7 @@ func (c *Client) Save(id string, telemetry entities.Telemetry) error {
 	return nil
 }
 
-func (c *Client) GetLatest(chipID int32) (entities.Telemetry, error) {
+func (c *TelemetryRepoAdapter) GetLatest(chipID int32) (entities.Telemetry, error) {
 	measurement := pg_models.Measurement{}
 	res := c.db.Order("timestamp DESC").Where("chip_id = ?", chipID).Last(&measurement)
 	if res.Error != nil {
@@ -62,11 +46,11 @@ func (c *Client) GetLatest(chipID int32) (entities.Telemetry, error) {
 			OriginalError: res.Error.Error(),
 		}
 	}
-	telemetry := pg_mappers.MapTelemetry(measurement)
+	telemetry := pg_mappers.ToTelemetryEntity(measurement)
 	return telemetry, nil
 }
 
-func (c *Client) GetRange(chipID int32, from time.Time, to time.Time) ([]entities.Telemetry, error) {
+func (c *TelemetryRepoAdapter) GetRange(chipID int32, from time.Time, to time.Time) ([]entities.Telemetry, error) {
 	measurements := []pg_models.Measurement{}
 	query := c.db.Where("chip_id = ?", chipID)
 	if !to.IsZero() {
@@ -79,11 +63,11 @@ func (c *Client) GetRange(chipID int32, from time.Time, to time.Time) ([]entitie
 			OriginalError: res.Error.Error(),
 		}
 	}
-	telemetries := pg_mappers.MapTelemetries(measurements)
+	telemetries := pg_mappers.ToTelemetryEntities(measurements)
 	return telemetries, nil
 }
 
-func (c *Client) Delete(id string) error {
+func (c *TelemetryRepoAdapter) Delete(id string) error {
 	delete := c.db.Delete(&pg_models.Measurement{}, id)
 	if delete.Error != nil {
 		return &errors.InternalServerError{
@@ -94,7 +78,4 @@ func (c *Client) Delete(id string) error {
 	return nil
 }
 
-func (c *Client) Close() {
-	db, _ := c.db.DB()
-	db.Close()
-}
+

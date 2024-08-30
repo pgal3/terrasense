@@ -8,6 +8,6 @@ import (
 type PairingRepoPort interface {
 	PairDevice(pairing entities.Pairing) error
 	GetPairings(userID string)([]entities.Pairing, error)
-	DeletePair(userID string, chipID string) error
-	UpdatePairing(userID string, chipID string, settings vo.PairingSettings) error
+	DeletePair(userID string, chipID int32) error
+	UpdatePairing(userID string, chipID int32, settings vo.PairingSettings) error
 }

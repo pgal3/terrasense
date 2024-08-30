@@ -4,26 +4,15 @@ import (
 	"log"
 
 	"github.com/PaoloEG/terrasense/internal/core/domain/errors"
-	"github.com/PaoloEG/terrasense/internal/core/services"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-type MqttHandler struct {
+type mqttHandler struct {
 	client  mqtt.Client
-	service *services.IngestorService
+	rcvCh   chan <- []byte
 }
 
-type Option func(*MqttHandler)
-
-func New(options ...Option) *MqttHandler {
-	client := &MqttHandler{}
-	for _, opt := range options {
-		opt(client)
-	}
-	return client
-}
-
-func (mq *MqttHandler) Start() error {
+func (mq *mqttHandler) Start() error {
 	if token := mq.client.Connect(); token.Wait() && token.Error() != nil {
 		return &errors.UnknownError{
 			Message: "Error in connecting MQTT client",
@@ -37,10 +26,10 @@ func (mq *MqttHandler) Start() error {
 	return nil
 }
 
-func (mq *MqttHandler) Subscribe(subTopic string) error {
+func (mq *mqttHandler) Subscribe(subTopic string) error {
 	subToken := mq.client.Subscribe(subTopic, 0, func(cl mqtt.Client, m mqtt.Message) {
 		log.Println("Message received from topic", m.Topic())
-		go mq.service.TelemetryHandler(m.Payload())
+		mq.rcvCh <- m.Payload()
 	})
 	subToken.Wait()
 	if subToken.Error() != nil {
@@ -52,7 +41,9 @@ func (mq *MqttHandler) Subscribe(subTopic string) error {
 	return nil
 }
 
-func (mq *MqttHandler) Disconnect() {
+func (mq *mqttHandler) Disconnect() {
 	log.Println("Disconnecting MQTT client")
 	mq.client.Disconnect(300)
+	log.Println("Closing receiving channel")
+	close(mq.rcvCh)
 }

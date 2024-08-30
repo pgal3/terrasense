@@ -35,7 +35,7 @@ func (c *PairingRepoAdapter) PairDevice(pairing entities.Pairing) error {
 
 func (c *PairingRepoAdapter) GetPairings(userID string)([]entities.Pairing, error){
 	pairings := []pg_models.Pairing{}
-	res := c.db.Order("timestamp DESC").Where("user_id = ?", userID).Last(&pairings)
+	res := c.db.Where("user_id = ?", userID).Last(&pairings)
 	if res.Error != nil {
 		if res.Error == gorm.ErrRecordNotFound {
 			return []entities.Pairing{}, &errors.NotFoundError{

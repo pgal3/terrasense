@@ -1,6 +1,7 @@
 package pg_adapter
 
 import (
+	"log"
 	"time"
 
 	"github.com/PaoloEG/terrasense/internal/core/domain/entities"
@@ -20,16 +21,17 @@ func NewTelemetryRepoAdapter(dbClient *gorm.DB) *TelemetryRepoAdapter{
 	}
 }
 
-func (c *TelemetryRepoAdapter) Save(id string, telemetry entities.Telemetry) error {
-	dbMeasurement := pg_mappers.ToMeasurementModel(telemetry)
-	res := c.db.Create(&dbMeasurement)
-	if res.Error != nil {
-		return &errors.InternalServerError{
-			Message:       "Error in saving telemetry in DB",
-			OriginalError: res.Error.Error(),
+func (c *TelemetryRepoAdapter) StartIngestor(inChan <- chan entities.Telemetry) {
+	go func(){
+		for telemetry := range inChan {
+			dbMeasurement := pg_mappers.ToMeasurementModel(telemetry)
+			res := c.db.Create(&dbMeasurement)
+			if res.Error != nil {
+				log.Fatal(res.Error.Error())
+				//TODO: managing error case
+			}
 		}
-	}
-	return nil
+	}()
 }
 
 func (c *TelemetryRepoAdapter) GetLatest(chipID int32) (entities.Telemetry, error) {

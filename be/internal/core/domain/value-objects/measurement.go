@@ -14,7 +14,7 @@ func NewMeasurement(
 	humidity float32,
 	pressure float32,
 	altitude float32)(Measurement, error) {
-		
+		// add control at value object creation
 	return Measurement{
 		temperature:  temperature,
 		soilMoisture: soilMoisture,

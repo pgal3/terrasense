@@ -13,14 +13,15 @@ func NewMeasurement(
 	soilMoisture float32,
 	humidity float32,
 	pressure float32,
-	altitude float32) Measurement {
+	altitude float32)(Measurement, error) {
+		
 	return Measurement{
 		temperature:  temperature,
 		soilMoisture: soilMoisture,
 		humidity:     humidity,
 		pressure:     pressure,
 		altitude:     altitude,
-	}
+	}, nil
 }
 
 func (m *Measurement) Temperature() float32 {
